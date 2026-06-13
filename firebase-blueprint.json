@@ -1,0 +1,136 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Information about a registered student user",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique user ID matching auth.uid" },
+        "email": { "type": "string", "description": "Primary email" },
+        "displayName": { "type": "string", "description": "Display name of the student" },
+        "role": { "type": "string", "enum": ["student", "teacher", "parent"], "description": "Role of the user" },
+        "points": { "type": "integer", "description": "Points earned from taking quizzes" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role", "createdAt", "updatedAt"]
+    },
+    "Note": {
+      "title": "Saved Notes",
+      "description": "Academic notes saved by students from tutor chats or lessons",
+      "type": "object",
+      "properties": {
+        "noteId": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "subject": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["noteId", "userId", "title", "content", "subject", "createdAt", "updatedAt"]
+    },
+    "LearningPath": {
+      "title": "Learning Path",
+      "description": "Academic weakness mapping and customized study plan recommended by AI",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "weakAreas": { "type": "array" },
+        "strengths": { "type": "array" },
+        "recommendedPlan": { "type": "string" },
+        "subjectPreferences": { "type": "array" },
+        "difficultyLevel": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "weakAreas", "strengths", "recommendedPlan", "updatedAt"]
+    },
+    "Chat": {
+      "title": "Tutor Chat",
+      "description": "Active tutoring session with AI on a specific academic topic",
+      "type": "object",
+      "properties": {
+        "chatId": { "type": "string" },
+        "userId": { "type": "string" },
+        "subject": { "type": "string" },
+        "title": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["chatId", "userId", "subject", "title", "createdAt", "updatedAt"]
+    },
+    "Message": {
+      "title": "Tutor Chat Message",
+      "description": "Individual turn in a session conversation",
+      "type": "object",
+      "properties": {
+        "messageId": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "model"] },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["messageId", "role", "content", "createdAt"]
+    },
+    "Quiz": {
+      "title": "Quiz",
+      "description": "Generated study quiz with options and detailed answers",
+      "type": "object",
+      "properties": {
+        "quizId": { "type": "string" },
+        "userId": { "type": "string" },
+        "subject": { "type": "string" },
+        "topic": { "type": "string" },
+        "difficulty": { "type": "string" },
+        "questions": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["quizId", "userId", "subject", "topic", "difficulty", "questions", "createdAt"]
+    },
+    "QuizScore": {
+      "title": "Quiz Score",
+      "description": "Scoring details and metadata of an attempted quiz",
+      "type": "object",
+      "properties": {
+        "scoreId": { "type": "string" },
+        "userId": { "type": "string" },
+        "quizId": { "type": "string" },
+        "subject": { "type": "string" },
+        "correctCount": { "type": "integer" },
+        "totalCount": { "type": "integer" },
+        "answers": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["scoreId", "userId", "quizId", "subject", "correctCount", "totalCount", "answers", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile database"
+    },
+    "/notes/{noteId}": {
+      "schema": "Note",
+      "description": "Student academic notes"
+    },
+    "/learning_paths/{userId}": {
+      "schema": "LearningPath",
+      "description": "Personalized academic analysis and AI study plans"
+    },
+    "/chats/{chatId}": {
+      "schema": "Chat",
+      "description": "Active AI tutor chats"
+    },
+    "/chats/{chatId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Messages inside a tutoring chat session"
+    },
+    "/quizzes/{quizId}": {
+      "schema": "Quiz",
+      "description": "AI generated practice quizzes"
+    },
+    "/quiz_scores/{scoreId}": {
+      "schema": "QuizScore",
+      "description": "History of completed student quizzes"
+    }
+  }
+}

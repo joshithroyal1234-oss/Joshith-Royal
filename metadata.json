@@ -1,0 +1,6 @@
+{
+  "name": "AI Study Companion",
+  "description": "An interactive, personalized AI tutoring platform with custom subjects, dynamic quiz generation, voice assist, and tailored study plans.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,116 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default-deny Catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Entity validations
+    function isValidUser(data) {
+      return data.uid == request.auth.uid 
+        && data.email is string 
+        && data.displayName is string 
+        && data.displayName.size() <= 100
+        && data.role in ['student', 'teacher', 'parent'];
+    }
+
+    function isValidNote(data) {
+      return data.userId == request.auth.uid
+        && data.title is string && data.title.size() <= 200
+        && data.content is string && data.content.size() <= 50000
+        && data.subject is string;
+    }
+
+    function isValidLearningPath(data) {
+      return data.userId == request.auth.uid
+        && data.weakAreas is list
+        && data.strengths is list
+        && data.recommendedPlan is string;
+    }
+
+    function isValidChat(data) {
+      return data.userId == request.auth.uid
+        && data.subject is string
+        && data.title is string && data.title.size() <= 500;
+    }
+
+    function isValidMessage(data) {
+      return data.role in ['user', 'model']
+        && data.content is string && data.content.size() <= 50000;
+    }
+
+    function isValidQuizScore(data) {
+      return data.userId == request.auth.uid
+        && data.correctCount is int
+        && data.totalCount is int
+        && data.answers is list;
+    }
+
+    // User Profile Rules
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && isValidUser(incoming()) 
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'role', 'points', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    // Saved Notes Rules
+    match /notes/{noteId} {
+      allow create: if isSignedIn() && isValidId(noteId) && incoming().userId == request.auth.uid && isValidNote(incoming());
+      allow read, update, delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    // Learning Paths Rules
+    match /learning_paths/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidLearningPath(incoming());
+    }
+
+    // AI Tutor Chats
+    match /chats/{chatId} {
+      allow create: if isSignedIn() && isValidId(chatId) && incoming().userId == request.auth.uid && isValidChat(incoming());
+      allow read, update, delete: if isSignedIn() && existing().userId == request.auth.uid;
+
+      // Subcollection for messages
+      match /messages/{messageId} {
+        allow create: if isSignedIn() && get(/databases/$(database)/documents/chats/$(chatId)).data.userId == request.auth.uid && isValidMessage(incoming());
+        allow read: if isSignedIn() && get(/databases/$(database)/documents/chats/$(chatId)).data.userId == request.auth.uid;
+      }
+    }
+
+    // Quizzes database
+    match /quizzes/{quizId} {
+      allow create: if isSignedIn() && isValidId(quizId) && incoming().userId == request.auth.uid;
+      allow read, delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    // Completed Quiz Scores
+    match /quiz_scores/{scoreId} {
+      allow create: if isSignedIn() && isValidId(scoreId) && incoming().userId == request.auth.uid && isValidQuizScore(incoming());
+      allow read: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+  }
+}
